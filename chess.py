@@ -62,7 +62,7 @@ def getMoves(square, board):
         return []
     kind, color = piece
     directions = all_directions[kind]
-    return makeMoves(kind, direction, color, board)
+    return makeMoves(kind, directions, color, board, square)
 
 def isEmpty(square, board):
     tmp = getSquare(board, square)
@@ -99,7 +99,7 @@ def takeOneDirection(initSquare,direction, color,board):
         if inBoard(targetSquare):
             targetContent = getSquare(board,targetSquare)
             if targetContent != 0:
-                if targetContent[2] != color:
+                if targetContent[1] != color:
                     res.append(targetSquare)
         return res
 
@@ -122,3 +122,60 @@ def playMove(move,board):
     newBoard[_from[0]][_from[1]] = 0
     newBoard[_to[0]][_to[1]] = piece
     return newBoard
+
+
+def getPieces(color, board):
+    """returns the list of squares containing a piece of color *color*."""
+    res = []
+    for y in range(8):
+        for x in range(8):
+           tmpSquare = (y,x)
+           tmpPiece = board[y][x]
+           if tmpPiece != 0 and tmpPiece[1] == color:
+               res.append(tmpSquare)
+    return res
+
+def getKing(color, board):
+    for y in range(8):
+        for x in range(8):
+           tmpSquare = (y,x)
+           tmpPiece = board[y][x]
+           if tmpPiece != 0  and tmpPiece[0] == k and tmpPiece[1] == color:
+               return tmpSquare
+
+def getOppositeColor(color):
+    return W if color == B else B
+
+def isCheck(board, color):
+    oppositeColor = getOppositeColor(color)
+    oppositePieces = getPieces(oppositeColor, board)
+    kingSquare = getKing(color, board)
+    for square in oppositePieces:
+        #tmpPiece = getSquare(board, square)
+        moves = getMoves(square, board)
+        if kingSquare in moves:
+            return True
+    return False
+
+
+def isCheckMate(board, color):
+    if not isCheck(board, color):
+        return False
+    kingSquare = getKing(color, board)
+    kingMoves = getMoves(kingSquare, board)
+    for move in kingMoves:
+        tmpBoard = playMove(move, board)
+        if not isCheck(tmpBoard, color):
+            return False
+    squares = getPieces(color, board)
+    #TODO: filter out moves that don't do anything
+    for square in squares:
+        piece = getSquare(board,square)
+        if piece[0] == k:
+            continue
+        moves = getMoves(square, board)
+        for move in moves:
+            tmpBoard = playMove(move, board)
+            if not isCheck(tmpBoard,color):
+                return False
+    return True
